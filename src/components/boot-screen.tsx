@@ -1,0 +1,16 @@
+export function BootScreen() {
+  return (
+    <div className="flex h-dvh flex-col items-center justify-center bg-background text-foreground">
+      <div className="flex flex-col items-center gap-5">
+        <div className="relative grid size-16 place-items-center rounded-2xl bg-card shadow-[0_0_0_1px_rgba(242,240,235,0.08)]">
+          <span className="ember-core block size-3.5 rounded-full bg-foreground" />
+          <span className="pointer-events-none absolute inset-2 rounded-full border-2 border-primary" />
+        </div>
+        <div className="text-center">
+          <p className="font-display text-3xl font-medium tracking-tight">Ember</p>
+          <p className="mt-1 text-sm text-muted-foreground">Still burning, just quieter.</p>
+        </div>
+      </div>
+    </div>
+  );
+}

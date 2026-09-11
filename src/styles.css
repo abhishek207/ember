@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #12110f;
+  --color-foreground: #f2f0eb;
+  --color-card: #1a1916;
+  --color-card-foreground: #f2f0eb;
+  --color-popover: #1c1b18;
+  --color-popover-foreground: #f2f0eb;
+  --color-primary: #8f9a86;
+  --color-primary-foreground: #12110f;
+  --color-secondary: #2a2824;
+  --color-secondary-foreground: #f2f0eb;
+  --color-muted: #2a2824;
+  --color-muted-foreground: #b5b1a8;
+  --color-accent: #8f9a86;
+  --color-accent-foreground: #12110f;
+  --color-destructive: #c45c4a;
+  --color-destructive-foreground: #f2f0eb;
+  --color-border: #2e2c28;
+  --color-input: #2e2c28;
+  --color-ring: #8f9a86;
+  --color-success: #8f9a86;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 1.75rem;
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html,
+  body,
+  #app {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  html {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    font-family: var(--font-display);
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+  .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+.lung-breathe {
+  transform-origin: 50% 72%;
+  animation: lung-breath 4s cubic-bezier(0.37, 0, 0.18, 1) infinite;
+}
+
+@keyframes lung-breath {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40%,
+  52% {
+    transform: scale(1.045, 1.08);
+  }
+}
+
+@keyframes ember-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.ember-core {
+  animation: ember-pulse 2.4s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lung-breathe,
+  .ember-core,
+  .stagger-item {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
