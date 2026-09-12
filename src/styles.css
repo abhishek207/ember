@@ -70,6 +70,33 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
+  input,
+  select,
+  textarea {
+    field-sizing: fixed;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  input[type="date"],
+  input[type="time"] {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-foreground);
+    caret-color: var(--color-foreground);
+    box-shadow: 0 0 0 1000px var(--color-background) inset;
+    transition: background-color 9999s ease-out;
+  }
 }
 
 @layer utilities {

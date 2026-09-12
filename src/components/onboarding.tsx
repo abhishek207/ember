@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { CigsPerDayField } from "@/components/cigs-per-day-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { fromLocalInputs, toLocalDateInput, toLocalTimeInput } from "@/lib/quit/format";
+import { fromLocalInputs, parseCigsPerDay, toLocalDateInput, toLocalTimeInput } from "@/lib/quit/format";
 import { useQuitStore } from "@/lib/quit/store";
 
 export function Onboarding() {
@@ -14,7 +14,7 @@ export function Onboarding() {
   const now = new Date();
   const [date, setDate] = useState(toLocalDateInput(now.toISOString()));
   const [time, setTime] = useState(toLocalTimeInput(now.toISOString()));
-  const [cigsPerDay, setCigsPerDay] = useState(10);
+  const [cigsPerDay, setCigsPerDay] = useState("10");
   const [costPerPack, setCostPerPack] = useState("20");
   const [cigsPerPack, setCigsPerPack] = useState("20");
   const [displayName, setDisplayName] = useState("");
@@ -26,7 +26,7 @@ export function Onboarding() {
     try {
       await updateProfile({
         quitAt: fromLocalInputs(date, time),
-        cigsPerDay,
+        cigsPerDay: parseCigsPerDay(cigsPerDay),
         costPerPack: Number(costPerPack) || 0,
         cigsPerPack: Math.max(1, Number(cigsPerPack) || 20),
         currency: "INR",
@@ -46,7 +46,7 @@ export function Onboarding() {
         Just a few facts. You can change them later. Nothing here is a lecture.
       </p>
       <form onSubmit={onStart} className="mt-8 flex flex-col gap-5">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-4">
           <div className="min-w-0 space-y-2">
             <Label htmlFor="quit-date">Date</Label>
             <Input
@@ -68,20 +68,8 @@ export function Onboarding() {
             />
           </div>
         </div>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label>Cigarettes a day</Label>
-            <span className="tabular-nums text-sm text-muted-foreground">{cigsPerDay}</span>
-          </div>
-          <Slider
-            min={1}
-            max={60}
-            step={1}
-            value={[cigsPerDay]}
-            onValueChange={(v) => setCigsPerDay(v[0] ?? 10)}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
+        <CigsPerDayField value={cigsPerDay} onChange={setCigsPerDay} />
+        <div className="grid grid-cols-2 gap-4">
           <div className="min-w-0 space-y-2">
             <Label htmlFor="pack-cost">Pack cost</Label>
             <Input

@@ -20,8 +20,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Slider } from "@/components/ui/slider";
-import { fromLocalInputs, toLocalDateInput, toLocalTimeInput } from "@/lib/quit/format";
+import { CigsPerDayField } from "@/components/cigs-per-day-field";
+import { fromLocalInputs, parseCigsPerDay, toLocalDateInput, toLocalTimeInput } from "@/lib/quit/format";
 import { useQuitStore } from "@/lib/quit/store";
 import type { Profile } from "@/lib/quit/types";
 
@@ -37,7 +37,9 @@ function Settings() {
 
   const [date, setDate] = useState(() => (profile ? toLocalDateInput(profile.quitAt) : ""));
   const [time, setTime] = useState(() => (profile ? toLocalTimeInput(profile.quitAt) : ""));
-  const [cigsPerDay, setCigsPerDay] = useState(profile?.cigsPerDay ?? 10);
+  const [cigsPerDay, setCigsPerDay] = useState(
+    String(profile?.cigsPerDay ?? 10),
+  );
   const [costPerPack, setCostPerPack] = useState(String(profile?.costPerPack ?? 20));
   const [cigsPerPack, setCigsPerPack] = useState(String(profile?.cigsPerPack ?? 20));
   const [displayName, setDisplayName] = useState(profile?.displayName ?? "");
@@ -49,7 +51,7 @@ function Settings() {
     if (!profile) return;
     setDate(toLocalDateInput(profile.quitAt));
     setTime(toLocalTimeInput(profile.quitAt));
-    setCigsPerDay(profile.cigsPerDay);
+    setCigsPerDay(String(profile.cigsPerDay));
     setCostPerPack(String(profile.costPerPack));
     setCigsPerPack(String(profile.cigsPerPack));
     setDisplayName(profile.displayName);
@@ -59,7 +61,7 @@ function Settings() {
   function snapshot(overrides: Partial<Profile> = {}): Profile {
     return {
       quitAt: fromLocalInputs(date, time),
-      cigsPerDay,
+      cigsPerDay: parseCigsPerDay(cigsPerDay),
       costPerPack: Number(costPerPack) || 0,
       cigsPerPack: Math.max(1, Number(cigsPerPack) || 20),
       currency,
@@ -111,7 +113,7 @@ function Settings() {
             onBlur={() => void persist({ displayName: displayName.trim() })}
           />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-4">
           <div className="min-w-0 space-y-2">
             <Label htmlFor="quit-date">Quit date</Label>
             <Input
@@ -139,28 +141,13 @@ function Settings() {
             />
           </div>
         </div>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label>Cigarettes a day</Label>
-            <span className="tabular-nums text-sm text-muted-foreground">{cigsPerDay}</span>
-          </div>
-          <Slider
-            min={1}
-            max={60}
-            step={1}
-            value={[cigsPerDay]}
-            onValueChange={(v) => {
-              const next = v[0] ?? 10;
-              setCigsPerDay(next);
-            }}
-            onValueCommit={(v) => {
-              const next = v[0] ?? 10;
-              void persist({ cigsPerDay: next });
-            }}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="min-w-0 space-y-2">
+        <CigsPerDayField
+          value={cigsPerDay}
+          onChange={setCigsPerDay}
+          onCommit={(n) => void persist({ cigsPerDay: n })}
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="min-w-0 overflow-hidden space-y-2">
             <Label htmlFor="pack-cost">Pack cost</Label>
             <Input
               id="pack-cost"
@@ -170,7 +157,7 @@ function Settings() {
               onBlur={() => void persist({ costPerPack: Number(costPerPack) || 0 })}
             />
           </div>
-          <div className="min-w-0 space-y-2">
+          <div className="min-w-0 overflow-hidden space-y-2">
             <Label htmlFor="pack-size">Cigs per pack</Label>
             <Input
               id="pack-size"

@@ -74,3 +74,15 @@ export function formatLongDate(iso: string): string {
     timeStyle: "short",
   });
 }
+
+export function parseCigsPerDay(raw: string): number {
+  const n = Number(String(raw).trim().replace(",", "."));
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.min(200, Math.round(n * 10) / 10);
+}
+
+export function formatCigsPerDay(n: number): string {
+  if (!Number.isFinite(n) || n < 0) return "0";
+  const rounded = Math.round(n * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
