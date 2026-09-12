@@ -197,6 +197,10 @@ function Settings() {
 
       <Separator className="my-8" />
 
+      <AccountSection />
+
+      <Separator className="my-8" />
+
       <section className="space-y-3">
         <h2 className="font-display text-lg font-medium">Home screen</h2>
         <InstallPwa />
@@ -205,10 +209,6 @@ function Settings() {
       <Separator className="my-8" />
 
       <AccountConnections />
-
-      <Separator className="my-8" />
-
-      <AccountSection />
 
       <Separator className="my-8" />
 
