@@ -1,8 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { setAccountPassword } from "@/lib/account";
-import { GROK_PROVIDERS, authClient } from "@/lib/auth/client";
-import { UserButton } from "@/lib/auth/gates";
+import { GROK_PROVIDERS, authClient, signOut } from "@/lib/auth/client";
+import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { InstallPwa } from "@/components/install-pwa";
 import {
@@ -208,10 +208,7 @@ function Settings() {
 
       <Separator className="my-8" />
 
-      <section className="space-y-3">
-        <h2 className="font-display text-lg font-medium">Account</h2>
-        <UserButton />
-      </section>
+      <AccountSection />
 
       <Separator className="my-8" />
 
@@ -414,6 +411,42 @@ function AccountConnections() {
           )}
         </li>
       </ul>
+    </section>
+  );
+}
+
+function AccountSection() {
+  const user = useCurrentUser();
+  const [signingOut, setSigningOut] = useState(false);
+  if (!user) return null;
+
+  const label = user.displayName ?? user.primaryEmail ?? "Signed in";
+  const email = user.primaryEmail && user.primaryEmail !== label ? user.primaryEmail : null;
+  const showSignOut = !hasGateSessionMarker();
+
+  return (
+    <section className="space-y-3">
+      <h2 className="font-display text-lg font-medium">Account</h2>
+      <div className="rounded-2xl bg-card px-4 py-3 shadow-[0_0_0_1px_rgba(242,240,235,0.08)]">
+        <p className="font-medium">{label}</p>
+        {email ? <p className="mt-0.5 text-sm text-muted-foreground">{email}</p> : null}
+      </div>
+      {showSignOut ? (
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full"
+          disabled={signingOut}
+          onClick={() => {
+            setSigningOut(true);
+            void signOut().catch(() => setSigningOut(false));
+          }}
+        >
+          {signingOut ? "Signing out…" : "Sign out"}
+        </Button>
+      ) : (
+        <p className="text-sm text-muted-foreground">You are signed in through Grok.</p>
+      )}
     </section>
   );
 }
