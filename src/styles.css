@@ -92,9 +92,11 @@
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus {
-    -webkit-text-fill-color: var(--color-foreground);
-    caret-color: var(--color-foreground);
-    box-shadow: 0 0 0 1000px var(--color-background) inset;
+    -webkit-text-fill-color: #f2f0eb !important;
+    caret-color: #f2f0eb;
+    box-shadow: 0 0 0 1000px #12110f inset !important;
+    -webkit-box-shadow: 0 0 0 1000px #12110f inset !important;
+    background-color: #12110f !important;
     transition: background-color 9999s ease-out;
   }
 }

@@ -109,6 +109,9 @@ function Settings() {
           <Input
             id="display-name"
             value={displayName}
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
             onChange={(e) => setDisplayName(e.target.value)}
             onBlur={() => void persist({ displayName: displayName.trim() })}
           />
