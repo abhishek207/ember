@@ -45,11 +45,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
       return;
     }
     const last = sessionStorage.getItem("ember-uid");
-    if (last && last !== userId) {
-      useQuitStore.setState({ profile: null, cravings: [], notes: [], remoteReady: false });
-    }
     sessionStorage.setItem("ember-uid", userId);
-    if (last === userId && useQuitStore.getState().remoteReady) return;
+    const state = useQuitStore.getState();
+    // Always pull when this account has no log yet. Skipping here is why a
+    // Google/X sign-in after email looked like a brand-new quit.
+    if (last === userId && state.remoteReady && state.profile) return;
     useQuitStore.setState({ remoteReady: false });
     void useQuitStore.getState().pullRemote();
   }, [userId]);

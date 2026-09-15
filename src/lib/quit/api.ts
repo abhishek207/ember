@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql, type Sql } from "@/lib/db";
+import { emailsMatch, namesMatch } from "./identity";
 import type { Craving, DailyNote, Profile, QuitPayload } from "./types";
 
 const profileSchema = z.object({
@@ -167,43 +168,136 @@ async function upsertProfile(sql: Sql, userId: string, data: Profile): Promise<v
   );
 }
 
+async function loadQuitForUser(sql: Sql, userId: string): Promise<QuitPayload> {
+  const profiles = await sql<Record<string, unknown>>`
+    select * from quit_profiles
+    where user_id = ${userId}
+    limit 1
+  `;
+  const cravings = await sql<CravingRow>`
+    select id, intensity, note, created_at
+    from quit_cravings
+    where user_id = ${userId}
+    order by created_at desc
+    limit 200
+  `;
+  const notes = await sql<NoteRow>`
+    select id, body, created_at
+    from quit_notes
+    where user_id = ${userId}
+    order by created_at desc
+    limit 100
+  `;
+  return {
+    profile: profiles[0] ? mapProfile(profiles[0]) : null,
+    cravings: cravings.map((row) => ({
+      id: row.id,
+      intensity: Number(row.intensity) || 1,
+      note: row.note ?? "",
+      createdAt: new Date(row.created_at).toISOString(),
+    })),
+    notes: notes.map((row) => ({
+      id: row.id,
+      body: row.body,
+      createdAt: new Date(row.created_at).toISOString(),
+    })),
+  };
+}
+
+async function reassignQuitOwner(sql: Sql, fromId: string, toId: string): Promise<void> {
+  if (!fromId || fromId === toId) return;
+  await sql`update quit_cravings set user_id = ${toId} where user_id = ${fromId}`;
+  await sql`update quit_notes set user_id = ${toId} where user_id = ${fromId}`;
+  await sql`update quit_profiles set user_id = ${toId} where user_id = ${fromId}`;
+}
+
+type ProfileOwnerRow = {
+  user_id: string;
+  quit_at: string | Date | null;
+  owner_email: string | null;
+  owner_name: string | null;
+};
+
+function quitTime(value: string | Date | null | undefined): number {
+  const t = new Date(String(value ?? "")).getTime();
+  return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+}
+
+async function reclaimQuitOwner(sql: Sql, userId: string): Promise<void> {
+  const existing = await sql<{ user_id: string; quit_at: string | Date | null }>`
+    select user_id, quit_at from quit_profiles where user_id = ${userId} limit 1
+  `;
+
+  const meRows = await sql<{ email: string | null; name: string | null }>`
+    select email, name from "user" where id = ${userId} limit 1
+  `;
+  const me = meRows[0];
+
+  const others = await sql<ProfileOwnerRow>`
+    select p.user_id, p.quit_at, u.email as owner_email, u.name as owner_name
+    from quit_profiles p
+    left join "user" u on u.id = p.user_id
+    where p.user_id <> ${userId}
+  `;
+  if (others.length === 0) return;
+
+  const emailHits = others.filter((row) => emailsMatch(me?.email, row.owner_email));
+  const nameHits = others.filter((row) => namesMatch(me?.name, row.owner_name));
+
+  let source: ProfileOwnerRow | undefined = emailHits[0];
+  if (!source && nameHits.length === 1) source = nameHits[0];
+
+  if (!source) {
+    const oauth = await sql<{ provider: string }>`
+      select "providerId" as provider from account
+      where "userId" = ${userId}
+        and "providerId" in ('grok-google', 'grok-x')
+      limit 1
+    `;
+    if (oauth[0]) {
+      const credentialOwners = await sql<{ uid: string; quit_at: string | Date | null }>`
+        select p.user_id as uid, p.quit_at
+        from account a
+        inner join quit_profiles p on p.user_id = a."userId"
+        where a."providerId" = 'credential'
+          and a."userId" <> ${userId}
+      `;
+      if (credentialOwners.length === 1) {
+        source = {
+          user_id: credentialOwners[0].uid,
+          quit_at: credentialOwners[0].quit_at,
+          owner_email: null,
+          owner_name: null,
+        };
+      } else if (others.length === 1) {
+        source = others[0];
+      }
+    }
+  }
+
+  if (!source) return;
+
+  const mine = existing[0];
+  if (mine && quitTime(mine.quit_at) <= quitTime(source.quit_at)) return;
+
+  if (mine) {
+    await sql`delete from quit_notes where user_id = ${userId}`;
+    await sql`delete from quit_cravings where user_id = ${userId}`;
+    await sql`delete from quit_profiles where user_id = ${userId}`;
+  }
+  await reassignQuitOwner(sql, source.user_id, userId);
+}
+
 export const fetchQuitData = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<QuitPayload> => {
     const sql = await getSql();
-    const profiles = await sql<Record<string, unknown>>`
-      select * from quit_profiles
-      where user_id = ${context.userId}
-      limit 1
-    `;
-    const cravings = await sql<CravingRow>`
-      select id, intensity, note, created_at
-      from quit_cravings
-      where user_id = ${context.userId}
-      order by created_at desc
-      limit 200
-    `;
-    const notes = await sql<NoteRow>`
-      select id, body, created_at
-      from quit_notes
-      where user_id = ${context.userId}
-      order by created_at desc
-      limit 100
-    `;
-    return {
-      profile: profiles[0] ? mapProfile(profiles[0]) : null,
-      cravings: cravings.map((row) => ({
-        id: row.id,
-        intensity: Number(row.intensity) || 1,
-        note: row.note ?? "",
-        createdAt: new Date(row.created_at).toISOString(),
-      })),
-      notes: notes.map((row) => ({
-        id: row.id,
-        body: row.body,
-        createdAt: new Date(row.created_at).toISOString(),
-      })),
-    };
+    try {
+      await reclaimQuitOwner(sql, context.userId);
+    } catch {
+      /* keep this account's own rows if reclaim cannot run */
+    }
+    return loadQuitForUser(sql, context.userId);
   });
 
 export const saveProfileFn = createServerFn({ method: "POST" })
