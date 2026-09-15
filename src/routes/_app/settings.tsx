@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { setAccountPassword } from "@/lib/account";
 import { GROK_PROVIDERS, authClient, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
@@ -252,12 +251,9 @@ function Settings() {
 type LinkedAccount = { id: string; providerId: string };
 
 function AccountConnections() {
-  const user = useCurrentUser();
   const [accounts, setAccounts] = useState<LinkedAccount[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [password, setPassword] = useState("");
-  const [email, setEmail] = useState(user?.primaryEmail ?? "");
 
   async function refresh() {
     const { data, error: err } = await authClient.listAccounts();
@@ -275,7 +271,6 @@ function AccountConnections() {
   }, []);
 
   const linked = new Set((accounts ?? []).map((a) => a.providerId));
-  const hasCredential = linked.has("credential");
 
   async function connect(providerId: string) {
     setBusy(providerId);
@@ -316,38 +311,11 @@ function AccountConnections() {
     }
   }
 
-  async function addPassword(e: FormEvent) {
-    e.preventDefault();
-    setBusy("credential");
-    setError(null);
-    try {
-      if (email && email !== user?.primaryEmail) {
-        const { error: mailErr } = await authClient.changeEmail({ newEmail: email });
-        if (mailErr) throw new Error(mailErr.message ?? "Could not update email");
-      }
-      const { error: pwErr } = await (async () => {
-        try {
-          await setAccountPassword({ data: { newPassword: password } });
-          return { error: null };
-        } catch (err) {
-          return { error: err instanceof Error ? err : new Error("Could not set password") };
-        }
-      })();
-      if (pwErr) throw new Error(pwErr.message ?? "Could not set password");
-      setPassword("");
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not add email sign-in");
-    } finally {
-      setBusy(null);
-    }
-  }
-
   return (
     <section className="space-y-3">
       <h2 className="font-display text-lg font-medium">Connected accounts</h2>
       <p className="text-sm text-muted-foreground">
-        Same person, same quit log. Link Google, X, or email so you can sign in either way.
+        Same person, same quit log. Link Google or X so you can sign in either way.
       </p>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <ul className="space-y-2">
@@ -376,40 +344,6 @@ function AccountConnections() {
             </li>
           );
         })}
-        <li className="rounded-2xl bg-card px-4 py-3 shadow-[0_0_0_1px_rgba(242,240,235,0.08)]">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium">Email & password</p>
-              <p className="text-xs text-muted-foreground">
-                {hasCredential ? user?.primaryEmail ?? "Connected" : "Not connected"}
-              </p>
-            </div>
-          </div>
-          {hasCredential ? null : (
-            <form onSubmit={addPassword} className="mt-3 flex flex-col gap-2">
-              <Input
-                type="email"
-                required
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-              />
-              <Input
-                type="password"
-                required
-                minLength={8}
-                placeholder="New password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-              />
-              <Button type="submit" size="sm" disabled={busy === "credential"}>
-                {busy === "credential" ? "Saving…" : "Add email sign-in"}
-              </Button>
-            </form>
-          )}
-        </li>
       </ul>
     </section>
   );

@@ -2,7 +2,7 @@
 
 A calm companion for quitting smoking. Track time free, watch your lungs clear, and keep the money you used to spend.
 
-Sign in with Google, X, or email. One account. Your quit log stays with you.
+Sign in with Google or X. One account. Your quit log stays with you.
 
 ## What it does
 
@@ -14,4 +14,4 @@ Sign in with Google, X, or email. One account. Your quit log stays with you.
 
 ## Stack
 
-TanStack Start, Better Auth (Google / X / email), Postgres.
+TanStack Start, Better Auth (Google / X), Postgres.
