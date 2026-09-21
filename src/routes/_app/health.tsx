@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { LungField } from "@/components/lung-field";
-import { formatCompactDuration } from "@/lib/quit/format";
+import { formatCompactDuration, formatDayMonth, milestoneReachedAt } from "@/lib/quit/format";
 import { MILESTONES } from "@/lib/quit/milestones";
 import { computeStats } from "@/lib/quit/stats";
 import { useQuitStore } from "@/lib/quit/store";
@@ -15,6 +15,7 @@ function Body() {
   const stats = useMemo(() => computeStats(profile), [profile]);
   const nextIndex = MILESTONES.findIndex((m) => stats.seconds < m.afterSeconds);
   const focus = nextIndex === -1 ? MILESTONES.length - 1 : nextIndex;
+  const quitAt = profile?.quitAt;
 
   return (
     <div className="mx-auto w-full max-w-lg px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-10">
@@ -30,8 +31,10 @@ function Body() {
         {MILESTONES.map((m, i) => {
           const done = stats.seconds >= m.afterSeconds;
           const current = i === focus && !done;
+          const reached =
+            done && quitAt ? formatDayMonth(milestoneReachedAt(quitAt, m.afterSeconds)) : "";
           return (
-            <li key={m.id} className="relative flex gap-4 pb-6 last:pb-0">
+            <li key={m.id} className="group relative flex gap-4 pb-6 last:pb-0">
               {i < MILESTONES.length - 1 ? (
                 <span className="absolute top-7 left-[11px] h-[calc(100%-12px)] w-px bg-border" />
               ) : null}
@@ -47,13 +50,18 @@ function Body() {
               >
                 {done ? <Check className="size-3.5" strokeWidth={2.4} /> : null}
               </span>
-              <div className={cn("min-w-0 pt-0.5", !done && !current && "opacity-55")}>
-                <p className="font-medium leading-snug">{m.title}</p>
+              <div className={cn("relative min-w-0 flex-1 pt-0.5", !done && !current && "opacity-55")}>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="font-medium leading-snug">{m.title}</p>
+                  {reached ? (
+                    <time className="shrink-0 pt-0.5 text-xs tabular-nums text-foreground/35 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-active:opacity-100">
+                      {reached}
+                    </time>
+                  ) : null}
+                </div>
                 <p className="mt-1 text-sm text-muted-foreground">{m.body}</p>
                 <p className="mt-1 text-xs tabular-nums text-muted-foreground">
-                  {done
-                    ? "Reached"
-                    : `In ${formatCompactDuration(m.afterSeconds - stats.seconds)}`}
+                  {done ? "Reached" : `In ${formatCompactDuration(m.afterSeconds - stats.seconds)}`}
                 </p>
               </div>
             </li>

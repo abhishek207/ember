@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
+import { LiquidGlassDefs } from "@/components/liquid-glass";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import appCss from "../styles.css?url";
 
@@ -40,6 +41,7 @@ function RootDocument() {
       </head>
       <body>
         <PreviewHostBridge />
+        <LiquidGlassDefs />
         <AuthProvider>
           <Outlet />
         </AuthProvider>

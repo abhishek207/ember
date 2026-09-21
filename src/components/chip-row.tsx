@@ -13,7 +13,7 @@ export function ChipRow({ stats, currency }: { stats: QuitStats; currency: strin
 
 function Chip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-2xl bg-card px-2 py-3 text-center shadow-[0_0_0_1px_rgba(242,240,235,0.08)]">
+    <div className="glass min-w-0 rounded-2xl px-2 py-3 text-center">
       <div className="truncate font-display text-base font-medium tabular-nums tracking-tight sm:text-lg">
         {value}
       </div>

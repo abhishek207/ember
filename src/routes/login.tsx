@@ -24,7 +24,7 @@ function Login() {
         </p>
 
         {authEnabled ? (
-          <div className="mt-8 flex flex-col gap-2">
+          <div className="glass-liquid mt-8 flex flex-col gap-2 rounded-3xl p-3">
             {GROK_PROVIDERS.map((p) => (
               <Button
                 key={p.providerId}

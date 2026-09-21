@@ -115,3 +115,11 @@ export function dayGreeting(now = new Date()): string {
   return "Good evening";
 }
 
+export function formatDayMonth(date: Date): string {
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+export function milestoneReachedAt(quitAt: string, afterSeconds: number): Date {
+  return new Date(new Date(quitAt).getTime() + afterSeconds * 1000);
+}

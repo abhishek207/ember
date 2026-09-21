@@ -69,7 +69,7 @@ function Stat({
   label: string;
 }) {
   return (
-    <div className="rounded-2xl bg-card/80 px-2 py-3 text-center shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-foreground)_8%,transparent)] backdrop-blur-sm">
+    <div className="glass rounded-2xl px-2 py-3 text-center">
       <Icon className="mx-auto size-4 text-primary" strokeWidth={1.8} />
       <p className="mt-2 font-display text-lg leading-none font-medium tabular-nums">{value}</p>
       <p className="mt-1.5 text-[10px] tracking-wide text-muted-foreground uppercase">{label}</p>
