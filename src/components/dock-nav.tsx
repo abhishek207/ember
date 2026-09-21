@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Flower2, HeartPulse, Home, UserRound, Wind } from "lucide-react";
 import { LiquidSurface } from "@/components/liquid-glass";
@@ -21,17 +21,16 @@ function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
-export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement | null> }) {
+export function DockNav({ collapsed, onExpand }: { collapsed: boolean; onExpand: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
   const [thumb, setThumb] = useState({ x: 0, w: 0 });
   const [dragX, setDragX] = useState<number | null>(null);
-  const [hover, setHover] = useState<number | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
   const drag = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null);
-  const active = hover ?? navIndex(pathname);
+  const skipClick = useRef(false);
+  const active = navIndex(pathname);
 
   function measure(index: number) {
     const track = trackRef.current;
@@ -39,6 +38,7 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
     if (!track || !item) return;
     const tr = track.getBoundingClientRect();
     const ir = item.getBoundingClientRect();
+    if (ir.width < 8) return;
     setThumb({ x: ir.left - tr.left, w: ir.width });
   }
 
@@ -57,49 +57,26 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
     return best;
   }
 
-  function go(index: number) {
-    const item = NAV[index];
-    if (!item) return;
-    measure(index);
-    if (navIndex(pathname) !== index) navigate({ to: item.to });
-  }
-
   function follow(clientX: number) {
     const track = trackRef.current;
     if (!track) return;
     const tr = track.getBoundingClientRect();
     const w = thumb.w || tr.width / NAV.length;
-    const x = clamp(clientX - tr.left - w / 2, 0, Math.max(0, tr.width - w));
-    setDragX(x);
-    setHover(indexFromClientX(clientX));
+    setDragX(clamp(clientX - tr.left - w / 2, 0, Math.max(0, tr.width - w)));
   }
 
   useLayoutEffect(() => {
-    if (collapsed || drag.current?.moved) return;
-    measure(navIndex(pathname));
-    const t = window.setTimeout(() => measure(navIndex(pathname)), 340);
+    if (collapsed) return;
+    measure(active);
+    const t = window.setTimeout(() => measure(active), 340);
     return () => window.clearTimeout(t);
-  }, [pathname, collapsed]);
+  }, [pathname, collapsed, active]);
 
   useEffect(() => {
-    const el = scrollRoot.current;
-    if (!el) return;
-    const apply = () => {
-      const y = el.scrollTop;
-      if (y <= 24) setCollapsed(false);
-      else if (y >= 56) setCollapsed(true);
-    };
-    apply();
-    el.addEventListener("scroll", apply, { passive: true });
-    return () => el.removeEventListener("scroll", apply);
-  }, [scrollRoot]);
-
-  useEffect(() => {
-    setHover(null);
     setDragX(null);
-    const y = scrollRoot.current?.scrollTop ?? 0;
-    setCollapsed(y >= 56);
-  }, [pathname, scrollRoot]);
+    drag.current = null;
+    skipClick.current = false;
+  }, [pathname]);
 
   function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
     if (collapsed || e.button !== 0) return;
@@ -108,14 +85,13 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
 
   function onPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
     const d = drag.current;
-    if (!d || d.id !== e.pointerId) return;
+    if (!d || d.id !== e.pointerId || collapsed) return;
     const dx = e.clientX - d.x;
     const dy = e.clientY - d.y;
     if (!d.moved) {
-      if (Math.hypot(dx, dy) < 16) return;
-      if (Math.abs(dx) < Math.abs(dy)) return;
+      if (Math.hypot(dx, dy) < 28) return;
+      if (Math.abs(dx) <= Math.abs(dy)) return;
       d.moved = true;
-      e.currentTarget.setPointerCapture(e.pointerId);
     }
     follow(e.clientX);
   }
@@ -126,10 +102,11 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
     const moved = d.moved;
     drag.current = null;
     setDragX(null);
-    setHover(null);
-    if (collapsed) return;
-    go(indexFromClientX(e.clientX));
-    if (moved) e.preventDefault();
+    if (!moved || collapsed) return;
+    skipClick.current = true;
+    const i = indexFromClientX(e.clientX);
+    const next = NAV[i];
+    if (next && i !== navIndex(pathname)) navigate({ to: next.to });
   }
 
   const x = dragX ?? thumb.x;
@@ -137,12 +114,12 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
   return (
     <LiquidSurface
       as="nav"
-      className="liquid-dock"
+      className={cn("liquid-dock", collapsed && "is-collapsed")}
       collapsed={collapsed}
       onClick={(e) => {
         if (!collapsed) return;
         e.preventDefault();
-        setCollapsed(false);
+        onExpand();
       }}
     >
       <div
@@ -154,7 +131,6 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
         onPointerCancel={() => {
           drag.current = null;
           setDragX(null);
-          setHover(null);
         }}
       >
         <span
@@ -181,7 +157,10 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
                   className="dock-link"
                   tabIndex={collapsed && !on ? -1 : undefined}
                   onClick={(e) => {
-                    if (collapsed) e.preventDefault();
+                    if (collapsed || skipClick.current) {
+                      e.preventDefault();
+                      skipClick.current = false;
+                    }
                   }}
                 >
                   <Icon className="size-5" strokeWidth={on ? 2.3 : 1.7} />

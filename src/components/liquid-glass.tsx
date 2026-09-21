@@ -116,7 +116,7 @@ export function LiquidSurface({
       ref={ref as RefObject<HTMLElement | null>}
       aria-label={Tag === "nav" ? (label ?? "Main") : undefined}
       aria-expanded={Tag === "nav" ? !collapsed : undefined}
-      className={cn(className)}
+      className={cn(className, collapsed && "is-collapsed")}
       style={{
         backdropFilter: map ? `${GLASS} url(#${filterId})` : GLASS,
         WebkitBackdropFilter: GLASS,

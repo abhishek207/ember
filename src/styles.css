@@ -329,6 +329,22 @@
   animation: lung-breath 4s cubic-bezier(0.37, 0, 0.18, 1) infinite;
 }
 
+.body-pulse {
+  animation: body-pulse 2.8s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes body-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.62;
+  }
+}
+
 @keyframes lung-breath {
   0%,
   100% {
@@ -400,6 +416,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .lung-breathe,
+  .body-pulse,
   .ember-core,
   .breathe-ring {
     animation: none;
