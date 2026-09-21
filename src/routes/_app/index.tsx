@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Cigarette, Clock3, Wallet } from "lucide-react";
 import { DaysHero } from "@/components/days-hero";
 import { dayGreeting, firstName, formatCompactDuration, formatCount, formatLifeMinutes, formatMoney, splitDuration } from "@/lib/quit/format";
-import { ringGoal } from "@/lib/quit/milestones";
+import { nextMilestone } from "@/lib/quit/milestones";
 import { computeStats } from "@/lib/quit/stats";
 import { useQuitStore } from "@/lib/quit/store";
 
@@ -12,15 +12,17 @@ export const Route = createFileRoute("/_app/")({ component: Home });
 function Home() {
   const profile = useQuitStore((s) => s.profile);
   const stats = useMemo(() => computeStats(profile), [profile]);
-  const goal = ringGoal(stats.seconds);
+  const mile = nextMilestone(stats.seconds);
   const { days, hours } = splitDuration(stats.seconds);
   const name = firstName(profile?.displayName);
   const hello = name ? `${dayGreeting()}, ${name}` : dayGreeting();
   const heroValue = days > 0 ? days : hours;
   const heroUnit = days > 0 ? (days === 1 ? "day" : "days") : hours === 1 ? "hour" : "hours";
-  const goalLine = goal.complete
-    ? "Year mark reached"
-    : `${formatCompactDuration(goal.remainingSeconds)} to ${goal.label}`;
+  const allReached = mile.current?.id === mile.next.id && mile.progress === 1;
+  const remaining = Math.max(0, mile.next.afterSeconds - stats.seconds);
+  const goalLine = allReached
+    ? `${mile.next.title} reached`
+    : `${formatCompactDuration(remaining)} to ${mile.next.title}`;
 
   return (
     <div className="scene-home min-h-full">
@@ -31,7 +33,7 @@ function Home() {
         </h1>
 
         <div className="mt-8 flex flex-1 flex-col items-center">
-          <DaysHero value={heroValue} unit={heroUnit} progress={goal.progress} />
+          <DaysHero value={heroValue} unit={heroUnit} progress={mile.progress} />
           <p className="mt-4 text-sm text-muted-foreground">{goalLine}</p>
 
           <div className="mt-8 grid w-full grid-cols-3 gap-2">
