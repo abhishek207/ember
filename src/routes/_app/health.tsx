@@ -15,8 +15,6 @@ function Body() {
   const stats = useMemo(() => computeStats(profile), [profile]);
   const nextIndex = MILESTONES.findIndex((m) => stats.seconds < m.afterSeconds);
   const focus = nextIndex === -1 ? MILESTONES.length - 1 : nextIndex;
-  const windowStart = Math.max(0, focus - 2);
-  const windowEnd = Math.min(MILESTONES.length - 1, focus + 2);
 
   return (
     <div className="mx-auto w-full max-w-lg px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-10">
@@ -32,7 +30,6 @@ function Body() {
         {MILESTONES.map((m, i) => {
           const done = stats.seconds >= m.afterSeconds;
           const current = i === focus && !done;
-          if (i < windowStart || i > windowEnd) return null;
           return (
             <li key={m.id} className="relative flex gap-4 pb-6 last:pb-0">
               {i < MILESTONES.length - 1 ? (
@@ -52,9 +49,7 @@ function Body() {
               </span>
               <div className={cn("min-w-0 pt-0.5", !done && !current && "opacity-55")}>
                 <p className="font-medium leading-snug">{m.title}</p>
-                {(done || current) && (
-                  <p className="mt-1 text-sm text-muted-foreground">{m.body}</p>
-                )}
+                <p className="mt-1 text-sm text-muted-foreground">{m.body}</p>
                 <p className="mt-1 text-xs tabular-nums text-muted-foreground">
                   {done
                     ? "Reached"

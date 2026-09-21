@@ -10,12 +10,9 @@ export const URGE_LINES = [
 ];
 
 export const HOME_LINES = [
-  "Discipline today is freedom tomorrow.",
-  "A clearer day is already under way.",
-  "You kept the air. That is the work.",
-  "Quiet progress still counts.",
-  "One clean hour stacked on another.",
-  "The body notices every day you stay.",
+  "The count is the work. Nothing else to prove today.",
+  "Another clean interval. Keep it ordinary.",
+  "The body is already using the time you gave it.",
 ];
 
 export function urgeLineFor(now = Date.now()): string {

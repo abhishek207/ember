@@ -2,9 +2,8 @@ import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Cigarette, Clock3, Wallet } from "lucide-react";
 import { DaysHero } from "@/components/days-hero";
-import { dayGreeting, firstName, formatCount, formatLifeMinutes, formatMoney, splitDuration } from "@/lib/quit/format";
-import { nextMilestone } from "@/lib/quit/milestones";
-import { homeLineFor } from "@/lib/quit/quotes";
+import { dayGreeting, firstName, formatCompactDuration, formatCount, formatLifeMinutes, formatMoney, splitDuration } from "@/lib/quit/format";
+import { ringGoal } from "@/lib/quit/milestones";
 import { computeStats } from "@/lib/quit/stats";
 import { useQuitStore } from "@/lib/quit/store";
 
@@ -13,11 +12,15 @@ export const Route = createFileRoute("/_app/")({ component: Home });
 function Home() {
   const profile = useQuitStore((s) => s.profile);
   const stats = useMemo(() => computeStats(profile), [profile]);
-  const mile = nextMilestone(stats.seconds);
-  const { days } = splitDuration(stats.seconds);
+  const goal = ringGoal(stats.seconds);
+  const { days, hours } = splitDuration(stats.seconds);
   const name = firstName(profile?.displayName);
   const hello = name ? `${dayGreeting()}, ${name}` : dayGreeting();
-  const quote = homeLineFor();
+  const heroValue = days > 0 ? days : hours;
+  const heroUnit = days > 0 ? (days === 1 ? "day" : "days") : hours === 1 ? "hour" : "hours";
+  const goalLine = goal.complete
+    ? "Year mark reached"
+    : `${formatCompactDuration(goal.remainingSeconds)} to ${goal.label}`;
 
   return (
     <div className="scene-home min-h-full">
@@ -28,7 +31,8 @@ function Home() {
         </h1>
 
         <div className="mt-8 flex flex-1 flex-col items-center">
-          <DaysHero days={days} progress={mile.progress} />
+          <DaysHero value={heroValue} unit={heroUnit} progress={goal.progress} />
+          <p className="mt-4 text-sm text-muted-foreground">{goalLine}</p>
 
           <div className="mt-8 grid w-full grid-cols-3 gap-2">
             <Stat
@@ -47,10 +51,6 @@ function Home() {
               label="Time back"
             />
           </div>
-
-          <p className="mt-8 max-w-[18rem] text-center font-display text-base leading-snug text-foreground/90">
-            “{quote}”
-          </p>
         </div>
       </div>
     </div>
