@@ -233,7 +233,13 @@
 .scene-home {
   background-color: var(--color-background);
   background-image:
-    linear-gradient(180deg, rgb(12 14 12 / 0.18) 0%, rgb(12 14 12 / 0.42) 42%, var(--color-background) 78%),
+    linear-gradient(
+      180deg,
+      rgb(12 14 12 / 0.68) 0%,
+      rgb(12 14 12 / 0.52) 22%,
+      rgb(12 14 12 / 0.38) 48%,
+      var(--color-background) 78%
+    ),
     url("/art/forest-night.jpg");
   background-size: cover;
   background-position: center 28%;
