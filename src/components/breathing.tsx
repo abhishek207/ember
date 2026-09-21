@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-type Phase = { label: string; seconds: number; scale: number };
+type Phase = { label: string; seconds: number; open: boolean };
 
 const CYCLE: Phase[] = [
-  { label: "Breathe in", seconds: 4, scale: 1.12 },
-  { label: "Hold", seconds: 7, scale: 1.12 },
-  { label: "Breathe out", seconds: 8, scale: 0.92 },
+  { label: "Breathe in", seconds: 4, open: true },
+  { label: "Breathe out", seconds: 4, open: false },
 ];
+
+const PETALS = 6;
 
 export function Breathing() {
   const [running, setRunning] = useState(false);
@@ -27,6 +28,7 @@ export function Breathing() {
   }, [running, phaseIndex]);
 
   const phase = CYCLE[phaseIndex]!;
+  const open = running ? phase.open : false;
 
   function toggle() {
     if (running) {
@@ -42,27 +44,33 @@ export function Breathing() {
 
   return (
     <div className="flex flex-col items-center gap-6 py-4">
-      <div className="grid size-56 place-items-center">
-        <div
-          className="size-40 rounded-full border-[10px] border-primary/80 bg-primary/10"
+      <div className="relative grid size-56 place-items-center">
+        {Array.from({ length: PETALS }, (_, i) => (
+          <span
+            key={i}
+            className="breathe-petal"
+            style={{
+              transform: `rotate(${i * (360 / PETALS)}deg) translateY(${open ? "-18%" : "-4%"}) scale(${open ? 1 : 0.62})`,
+              transitionDuration: running ? `${phase.seconds}s` : "0.5s",
+            }}
+          />
+        ))}
+        <span
+          className="breathe-core"
           style={{
-            transform: `scale(${running ? phase.scale : 1})`,
-            transitionProperty: "transform",
-            transitionDuration: running ? `${phase.seconds}s` : "0.4s",
-            transitionTimingFunction: "ease-in-out",
+            transform: `scale(${open ? 1 : 0.72})`,
+            transitionDuration: running ? `${phase.seconds}s` : "0.5s",
           }}
         />
       </div>
       <div className="text-center">
-        <p className="font-display text-2xl font-medium">
-          {running ? phase.label : "4–7–8"}
-        </p>
+        <p className="font-display text-2xl font-medium">{running ? phase.label : "Breathe"}</p>
         <p className="mt-1 tabular-nums text-sm text-muted-foreground">
-          {running ? remaining : "In 4, hold 7, out 8"}
+          {running ? remaining : "Four in. Four out."}
         </p>
       </div>
       <Button type="button" variant={running ? "secondary" : "default"} onClick={toggle}>
-        {running ? "Stop" : "Breathe"}
+        {running ? "Stop" : "Start"}
       </Button>
     </div>
   );
