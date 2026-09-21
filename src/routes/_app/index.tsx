@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Cigarette, Clock3, Wallet } from "lucide-react";
 import { DaysHero } from "@/components/days-hero";
+import { LiquidSurface } from "@/components/liquid-glass";
 import { dayGreeting, firstName, formatCompactDuration, formatCount, formatLifeMinutes, formatMoney, splitDuration } from "@/lib/quit/format";
 import { nextMilestone } from "@/lib/quit/milestones";
 import { computeStats } from "@/lib/quit/stats";
@@ -69,10 +70,10 @@ function Stat({
   label: string;
 }) {
   return (
-    <div className="liquid-card rounded-2xl px-2 py-3 text-center">
+    <LiquidSurface className="liquid-card px-2 py-3 text-center" radius={14} scale={12}>
       <Icon className="mx-auto size-4 text-primary" strokeWidth={1.8} />
       <p className="mt-2 font-display text-lg leading-none font-medium tabular-nums">{value}</p>
       <p className="mt-1.5 text-[10px] tracking-wide text-muted-foreground uppercase">{label}</p>
-    </div>
+    </LiquidSurface>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode, type RefObject } from "react";
+import { useEffect, useId, useRef, useState, type ElementType, type MouseEvent, type ReactNode, type RefObject } from "react";
 import { cn } from "@/lib/utils";
 
 function sdRoundRect(x: number, y: number, hw: number, hh: number, r: number) {
@@ -61,16 +61,26 @@ export function makeLensMap(width: number, height: number, radius: number): stri
   return canvas.toDataURL("image/png");
 }
 
+const GLASS = "blur(14px) saturate(180%) brightness(1.16)";
+
 export function LiquidSurface({
+  as: Tag = "div",
   className,
   children,
   onClick,
   collapsed,
+  radius,
+  scale = 20,
+  label,
 }: {
+  as?: ElementType;
   className?: string;
   children: ReactNode;
   onClick?: (e: MouseEvent<HTMLElement>) => void;
   collapsed?: boolean;
+  radius?: number;
+  scale?: number;
+  label?: string;
 }) {
   const ref = useRef<HTMLElement>(null);
   const rawId = useId().replace(/:/g, "");
@@ -85,7 +95,7 @@ export function LiquidSurface({
       const w = el.offsetWidth;
       const h = el.offsetHeight;
       if (w < 8 || h < 8) return;
-      const r = Math.min(h / 2, w / 2);
+      const r = radius ?? Math.min(h / 2, w / 2, 22);
       setMap(makeLensMap(w, h, r));
     };
     const schedule = () => {
@@ -99,17 +109,17 @@ export function LiquidSurface({
       ro.disconnect();
       if (frame) cancelAnimationFrame(frame);
     };
-  }, [collapsed]);
+  }, [collapsed, radius]);
 
   return (
-    <nav
+    <Tag
       ref={ref as RefObject<HTMLElement | null>}
-      aria-label="Main"
-      aria-expanded={!collapsed}
-      className={cn("liquid-dock", collapsed && "is-collapsed", className)}
+      aria-label={Tag === "nav" ? (label ?? "Main") : undefined}
+      aria-expanded={Tag === "nav" ? !collapsed : undefined}
+      className={cn(className)}
       style={{
-        backdropFilter: map ? `blur(8px) saturate(155%) brightness(1.08) url(#${filterId})` : undefined,
-        WebkitBackdropFilter: "blur(8px) saturate(155%) brightness(1.08)",
+        backdropFilter: map ? `${GLASS} url(#${filterId})` : GLASS,
+        WebkitBackdropFilter: GLASS,
       }}
       onClick={onClick}
     >
@@ -135,7 +145,7 @@ export function LiquidSurface({
             <feDisplacementMap
               in="SourceGraphic"
               in2="map"
-              scale="20"
+              scale={scale}
               xChannelSelector="R"
               yChannelSelector="G"
             />
@@ -143,11 +153,11 @@ export function LiquidSurface({
         </svg>
       ) : null}
       {children}
-    </nav>
+    </Tag>
   );
 }
 
-/** Kept for the document root — no-op defs; maps are per-dock. */
+/** Kept for the document root — no-op defs; maps are per-surface. */
 export function LiquidGlassDefs() {
   return null;
 }

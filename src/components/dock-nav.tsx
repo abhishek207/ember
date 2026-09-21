@@ -45,6 +45,8 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
 
   return (
     <LiquidSurface
+      as="nav"
+      className="liquid-dock"
       collapsed={collapsed}
       onClick={(e) => {
         if (!collapsed) return;
