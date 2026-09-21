@@ -70,7 +70,7 @@ function Stat({
   label: string;
 }) {
   return (
-    <LiquidSurface className="liquid-card px-2 py-3 text-center" radius={14} scale={12}>
+    <LiquidSurface className="liquid-card px-2 py-3 text-center" radius={17} scale={12}>
       <Icon className="mx-auto size-4 text-primary" strokeWidth={1.8} />
       <p className="mt-2 font-display text-lg leading-none font-medium tabular-nums">{value}</p>
       <p className="mt-1.5 text-[10px] tracking-wide text-muted-foreground uppercase">{label}</p>
