@@ -37,37 +37,80 @@ export const REGION_LABEL: Record<BodyRegion, string> = {
   vessels: "Vessels",
 };
 
-const VIEW = 2.15;
-const SAGE = "#8fb089";
-const HEART = "#c45c4a";
+const DUST = new THREE.Color("#6a7166");
+const SAGE = new THREE.Color("#8fb089");
+const CLEAR = new THREE.Color("#b7c9b0");
+const HEART = new THREE.Color("#b85a4c");
+const HEART_LIT = new THREE.Color("#d97868");
 
-function fitCamera(camera: THREE.OrthographicCamera, w: number, h: number) {
-  const aspect = w / Math.max(h, 1);
-  if (aspect >= 1) {
-    camera.left = -VIEW * aspect;
-    camera.right = VIEW * aspect;
-    camera.top = VIEW;
-    camera.bottom = -VIEW;
+function lungShape(side: -1 | 1): THREE.Shape {
+  const s = new THREE.Shape();
+  if (side < 0) {
+    s.moveTo(-0.12, 1.18);
+    s.bezierCurveTo(-0.28, 1.22, -0.7, 1.04, -0.86, 0.48);
+    s.bezierCurveTo(-0.98, 0.02, -0.94, -0.52, -0.7, -0.92);
+    s.bezierCurveTo(-0.48, -1.14, -0.18, -1.1, -0.08, -0.78);
+    s.bezierCurveTo(-0.02, -0.42, -0.04, 0.18, -0.06, 0.62);
+    s.bezierCurveTo(-0.07, 0.92, -0.08, 1.1, -0.12, 1.18);
   } else {
-    camera.left = -VIEW;
-    camera.right = VIEW;
-    camera.top = VIEW / aspect;
-    camera.bottom = -VIEW / aspect;
+    s.moveTo(0.1, 1.14);
+    s.bezierCurveTo(0.26, 1.18, 0.66, 1.0, 0.82, 0.44);
+    s.bezierCurveTo(0.94, -0.02, 0.88, -0.5, 0.64, -0.9);
+    s.bezierCurveTo(0.44, -1.12, 0.16, -1.08, 0.08, -0.74);
+    s.bezierCurveTo(0.04, -0.42, 0.28, -0.08, 0.3, 0.18);
+    s.bezierCurveTo(0.22, 0.42, 0.06, 0.72, 0.08, 1.0);
+    s.bezierCurveTo(0.08, 1.08, 0.09, 1.12, 0.1, 1.14);
   }
-  camera.updateProjectionMatrix();
+  return s;
 }
 
-function mat(hex: string, opacity: number, emissive = hex, emit = 0.12) {
-  return new THREE.MeshStandardMaterial({
-    color: new THREE.Color(hex),
-    roughness: 0.42,
-    metalness: 0.06,
-    emissive: new THREE.Color(emissive),
-    emissiveIntensity: emit,
-    transparent: true,
-    opacity,
-    depthWrite: false,
+function heartShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0, -0.28);
+  s.bezierCurveTo(-0.42, -0.02, -0.4, 0.38, -0.08, 0.32);
+  s.bezierCurveTo(-0.02, 0.42, 0.02, 0.42, 0.08, 0.32);
+  s.bezierCurveTo(0.4, 0.38, 0.42, -0.02, 0, -0.28);
+  return s;
+}
+
+function extrude(shape: THREE.Shape, depth: number): THREE.ExtrudeGeometry {
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth,
+    bevelEnabled: true,
+    bevelThickness: 0.055,
+    bevelSize: 0.048,
+    bevelOffset: -0.012,
+    bevelSegments: 5,
+    curveSegments: 28,
   });
+  geo.computeBoundingBox();
+  const box = geo.boundingBox!;
+  geo.translate(0, 0, -(box.min.z + box.max.z) / 2);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function tube(points: THREE.Vector3[], radius: number): THREE.TubeGeometry {
+  const curve = new THREE.CatmullRomCurve3(points);
+  return new THREE.TubeGeometry(curve, 24, radius, 8, false);
+}
+
+function organMat(color: THREE.Color, opacity = 0.96) {
+  return new THREE.MeshStandardMaterial({
+    color: color.clone(),
+    roughness: 0.46,
+    metalness: 0.04,
+    emissive: color.clone().multiplyScalar(0.18),
+    emissiveIntensity: 0.06,
+    transparent: opacity < 0.999,
+    opacity,
+    depthWrite: opacity > 0.4,
+  });
+}
+
+function fitPersp(camera: THREE.PerspectiveCamera, w: number, h: number) {
+  camera.aspect = w / Math.max(h, 1);
+  camera.updateProjectionMatrix();
 }
 
 export function BodyScene({
@@ -96,128 +139,178 @@ export function BodyScene({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
     renderer.setClearColor(0x000000, 0);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
     host.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-VIEW, VIEW, VIEW, -VIEW, 0.1, 20);
-    camera.position.z = 8;
-    fitCamera(camera, width, height);
+    const camera = new THREE.PerspectiveCamera(28, width / Math.max(height, 1), 0.1, 40);
+    camera.position.set(0, 0.12, 7.6);
+    camera.lookAt(0, -0.04, 0);
 
     const root = new THREE.Group();
     scene.add(root);
 
-    const sphere = new THREE.SphereGeometry(1, 40, 40);
-    const cyl = new THREE.CylinderGeometry(1, 1, 1, 20);
+    const rightGeo = extrude(lungShape(-1), 0.52);
+    const leftGeo = extrude(lungShape(1), 0.5);
+    const heartGeo = extrude(heartShape(), 0.28);
+    heartGeo.scale(0.72, 0.72, 0.72);
 
-    const head = new THREE.Mesh(sphere, mat("#c5cec0", 0.22, SAGE, 0.05));
-    head.scale.set(0.38, 0.44, 0.36);
-    head.position.set(0, 1.42, 0);
-    root.add(head);
+    const rightMat = organMat(SAGE);
+    const leftMat = organMat(SAGE);
+    const heartMat = organMat(HEART, 0.98);
+    const airwayMat = organMat(new THREE.Color("#c5d0c0"), 0.92);
+    const vesselMat = organMat(new THREE.Color("#c45c4a"), 0.0);
+    vesselMat.transparent = true;
+    const senseMat = organMat(new THREE.Color("#d7e2d3"), 0.0);
+    senseMat.transparent = true;
+    const ribMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color("#9aa394"),
+      roughness: 0.7,
+      metalness: 0.08,
+      transparent: true,
+      opacity: 0.1,
+      depthWrite: false,
+    });
+    const ringMat = new THREE.MeshStandardMaterial({
+      color: SAGE,
+      emissive: SAGE,
+      emissiveIntensity: 0.2,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+    });
 
-    const neck = new THREE.Mesh(cyl, mat("#9aa394", 0.2, SAGE, 0.04));
-    neck.scale.set(0.12, 0.28, 0.12);
-    neck.position.set(0, 1.08, 0);
-    root.add(neck);
+    const lungR = new THREE.Mesh(rightGeo, rightMat);
+    const lungL = new THREE.Mesh(leftGeo, leftMat);
+    lungR.position.set(0, -0.06, 0);
+    lungL.position.set(0, -0.08, 0);
+    root.add(lungR, lungL);
 
-    const trachea = new THREE.Mesh(cyl, mat("#b7c4b2", 0.35, SAGE, 0.1));
-    trachea.scale.set(0.07, 0.38, 0.07);
-    trachea.position.set(0, 0.72, 0.08);
-    root.add(trachea);
-
-    const bronL = new THREE.Mesh(cyl, mat("#b7c4b2", 0.32, SAGE, 0.1));
-    bronL.scale.set(0.055, 0.34, 0.055);
-    bronL.rotation.z = 0.72;
-    bronL.position.set(-0.18, 0.48, 0.1);
-    root.add(bronL);
-
-    const bronR = new THREE.Mesh(cyl, mat("#b7c4b2", 0.32, SAGE, 0.1));
-    bronR.scale.set(0.055, 0.34, 0.055);
-    bronR.rotation.z = -0.72;
-    bronR.position.set(0.18, 0.48, 0.1);
-    root.add(bronR);
-
-    const lungL = new THREE.Mesh(sphere, mat(SAGE, 0.34, SAGE, 0.16));
-    lungL.scale.set(0.62, 0.95, 0.48);
-    lungL.position.set(-0.58, -0.08, 0);
-    root.add(lungL);
-
-    const lungR = new THREE.Mesh(sphere, mat(SAGE, 0.34, SAGE, 0.16));
-    lungR.scale.set(0.62, 0.95, 0.48);
-    lungR.position.set(0.58, -0.08, 0);
-    root.add(lungR);
-
-    const heart = new THREE.Mesh(sphere, mat(HEART, 0.55, HEART, 0.28));
-    heart.scale.set(0.28, 0.34, 0.26);
-    heart.position.set(0.06, 0.18, 0.28);
+    const heart = new THREE.Mesh(heartGeo, heartMat);
+    heart.position.set(0.16, 0.06, 0.22);
+    heart.rotation.z = -0.18;
     root.add(heart);
 
-    const ringGeo = new THREE.TorusGeometry(1.05, 0.035, 12, 64);
-    const ring = new THREE.Mesh(ringGeo, mat(SAGE, 0.0, SAGE, 0.4));
-    ring.rotation.x = Math.PI / 2.4;
-    ring.position.set(0, -0.05, 0);
+    const tracheaGeo = tube(
+      [new THREE.Vector3(0, 1.28, 0.02), new THREE.Vector3(0, 0.72, 0.04), new THREE.Vector3(0, 0.42, 0.06)],
+      0.046,
+    );
+    const bronRGeo = tube(
+      [new THREE.Vector3(0, 0.44, 0.06), new THREE.Vector3(-0.16, 0.28, 0.04), new THREE.Vector3(-0.34, 0.02, 0.02)],
+      0.034,
+    );
+    const bronLGeo = tube(
+      [new THREE.Vector3(0, 0.44, 0.06), new THREE.Vector3(0.18, 0.3, 0.05), new THREE.Vector3(0.34, 0.04, 0.03)],
+      0.032,
+    );
+    const trachea = new THREE.Mesh(tracheaGeo, airwayMat);
+    const bronR = new THREE.Mesh(bronRGeo, airwayMat);
+    const bronL = new THREE.Mesh(bronLGeo, airwayMat);
+    root.add(trachea, bronR, bronL);
+
+    const aortaGeo = tube(
+      [
+        new THREE.Vector3(0.16, 0.22, 0.28),
+        new THREE.Vector3(0.08, 0.48, 0.22),
+        new THREE.Vector3(0.02, 0.86, 0.1),
+        new THREE.Vector3(0.0, 1.22, 0.04),
+      ],
+      0.028,
+    );
+    const aorta = new THREE.Mesh(aortaGeo, vesselMat);
+    root.add(aorta);
+
+    const senseGeo = new THREE.SphereGeometry(0.07, 20, 20);
+    const senseL = new THREE.Mesh(senseGeo, senseMat);
+    const senseR = new THREE.Mesh(senseGeo, senseMat);
+    senseL.position.set(-0.11, 1.42, 0.08);
+    senseR.position.set(0.11, 1.42, 0.08);
+    root.add(senseL, senseR);
+
+    const ribs: THREE.Mesh[] = [];
+    const ribGeos: THREE.BufferGeometry[] = [];
+    for (let i = 0; i < 5; i += 1) {
+      const y = 0.62 - i * 0.28;
+      const rx = 0.92 + i * 0.04;
+      const curve = new THREE.QuadraticBezierCurve3(
+        new THREE.Vector3(-rx, y, 0.08),
+        new THREE.Vector3(0, y - 0.08, 0.42),
+        new THREE.Vector3(rx, y, 0.08),
+      );
+      const geo = new THREE.TubeGeometry(curve, 20, 0.012, 6, false);
+      ribGeos.push(geo);
+      const mesh = new THREE.Mesh(geo, ribMat);
+      ribs.push(mesh);
+      root.add(mesh);
+    }
+
+    const ringGeo = new THREE.TorusGeometry(1.12, 0.018, 10, 64);
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2.15;
+    ring.position.set(0, -0.12, 0);
     root.add(ring);
 
-    scene.add(new THREE.AmbientLight(0xeef3ea, 0.6));
-    const key = new THREE.PointLight(0xb7c9b2, 16, 14);
-    key.position.set(-1.6, 1.8, 4);
+    scene.add(new THREE.HemisphereLight(0xe8efe4, 0x151a14, 0.72));
+    const key = new THREE.DirectionalLight(0xf3f6f0, 1.15);
+    key.position.set(-2.4, 2.8, 4.2);
     scene.add(key);
-    const fill = new THREE.PointLight(0x6f8a6a, 7, 12);
-    fill.position.set(2, -1.4, 3);
+    const rim = new THREE.DirectionalLight(0x8fb089, 0.45);
+    rim.position.set(2.2, -0.4, -2.4);
+    scene.add(rim);
+    const fill = new THREE.PointLight(0xb7c9b2, 4.5, 10);
+    fill.position.set(1.4, -1.2, 3.2);
     scene.add(fill);
-    const heartLight = new THREE.PointLight(0xc45c4a, 0, 4);
-    heartLight.position.copy(heart.position);
-    root.add(heartLight);
 
-    const lungMats = [lungL.material, lungR.material] as THREE.MeshStandardMaterial[];
-    const bronMats = [bronL.material, bronR.material, trachea.material] as THREE.MeshStandardMaterial[];
-    const headMat = head.material as THREE.MeshStandardMaterial;
-    const neckMat = neck.material as THREE.MeshStandardMaterial;
-    const heartMat = heart.material as THREE.MeshStandardMaterial;
-    const ringMat = ring.material as THREE.MeshStandardMaterial;
-
+    const lungColor = new THREE.Color();
+    const tmp = new THREE.Color();
     let frame = 0;
     const tick = (now: number) => {
       const t = now / 1000;
-      const open = reduce ? 0.5 : 0.5 + Math.sin(t * (Math.PI / 4)) * 0.5;
-      const breath = 1 + open * 0.045;
+      const breath = reduce ? 1 : 1 + Math.sin(t * (Math.PI / 4)) * 0.028;
+      const pulse = reduce ? 1 : 0.78 + Math.sin(t * 2.1) * 0.22;
       const target = regionRef.current;
       const heal = healRef.current;
-      const pulse = reduce ? 1 : 0.72 + Math.sin(t * 2.2) * 0.28;
-
-      lungL.scale.set(0.62 * breath, 0.95 * breath, 0.48);
-      lungR.scale.set(0.62 * breath, 0.95 * breath, 0.48);
+      lungColor.copy(DUST).lerp(CLEAR, heal);
 
       const lungOn = target === "lungs" || target === "cilia";
       const bronOn = target === "bronchi" || target === "cilia";
       const heartOn = target === "heart" || target === "circulation";
       const circOn = target === "circulation";
-      const headOn = target === "senses" || target === "vessels";
+      const headOn = target === "senses";
+      const vesselOn = target === "vessels" || target === "circulation";
 
-      const lungOp = 0.22 + heal * 0.38 + (lungOn ? 0.18 * pulse : 0);
-      lungMats.forEach((m) => {
-        m.opacity = lungOp;
-        m.emissiveIntensity = lungOn ? 0.22 + pulse * 0.35 : 0.08 + heal * 0.12;
-      });
+      lungR.scale.set(breath, breath, 1);
+      lungL.scale.set(breath, breath, 1);
 
-      bronMats.forEach((m) => {
-        m.opacity = bronOn ? 0.28 + pulse * 0.35 : 0.14 + heal * 0.12;
-        m.emissiveIntensity = bronOn ? 0.2 + pulse * 0.4 : 0.06;
-      });
+      rightMat.color.copy(lungColor);
+      leftMat.color.copy(lungColor);
+      tmp.copy(SAGE).lerp(CLEAR, 0.4);
+      rightMat.emissive.copy(lungOn ? tmp : lungColor);
+      leftMat.emissive.copy(lungOn ? tmp : lungColor);
+      rightMat.emissiveIntensity = lungOn ? 0.14 + pulse * 0.1 : 0.04;
+      leftMat.emissiveIntensity = lungOn ? 0.14 + pulse * 0.1 : 0.04;
 
-      heartMat.opacity = heartOn ? 0.5 + pulse * 0.28 : 0.32 + heal * 0.12;
-      heartMat.emissiveIntensity = heartOn ? 0.35 + pulse * 0.45 : 0.12;
-      const hs = (heartOn ? 0.95 + pulse * 0.12 : 1) * (0.95 + open * 0.04);
-      heart.scale.set(0.28 * hs, 0.34 * hs, 0.26 * hs);
-      heartLight.intensity = heartOn ? 4 + pulse * 5 : 0.6;
+      airwayMat.emissiveIntensity = bronOn ? 0.22 + pulse * 0.16 : 0.05;
+      airwayMat.opacity = bronOn ? 0.95 : 0.82;
+      trachea.scale.setScalar(bronOn ? 1 + pulse * 0.04 : 1);
 
-      headMat.opacity = headOn ? 0.28 + pulse * 0.32 : 0.14;
-      headMat.emissiveIntensity = headOn ? 0.18 + pulse * 0.35 : 0.04;
-      neckMat.opacity = target === "vessels" ? 0.3 + pulse * 0.3 : 0.12;
-      neckMat.emissiveIntensity = target === "vessels" ? 0.25 + pulse * 0.3 : 0.03;
+      heartMat.color.copy(heartOn ? HEART_LIT : HEART);
+      heartMat.emissive.copy(heartOn ? HEART_LIT : HEART);
+      heartMat.emissiveIntensity = heartOn ? 0.2 + pulse * 0.18 : 0.06;
+      const hs = heartOn ? 0.97 + pulse * 0.06 : 1;
+      heart.scale.set(hs, hs, hs);
 
-      ringMat.opacity = circOn ? 0.22 + pulse * 0.35 : 0;
-      ring.scale.setScalar(circOn ? 0.96 + pulse * 0.08 : 1);
+      vesselMat.opacity = vesselOn ? 0.55 + pulse * 0.25 : 0;
+      vesselMat.emissiveIntensity = vesselOn ? 0.28 + pulse * 0.2 : 0;
+      senseMat.opacity = headOn ? 0.55 + pulse * 0.3 : 0;
+      senseMat.emissiveIntensity = headOn ? 0.3 + pulse * 0.2 : 0;
 
+      ringMat.opacity = circOn ? 0.18 + pulse * 0.16 : 0;
+      ring.scale.setScalar(circOn ? 0.98 + pulse * 0.04 : 1);
+      ribMat.opacity = 0.08 + heal * 0.04;
+
+      root.rotation.y = reduce ? 0 : Math.sin(t * 0.18) * 0.12;
       renderer.render(scene, camera);
       frame = window.requestAnimationFrame(tick);
     };
@@ -226,7 +319,7 @@ export function BodyScene({
     const onResize = () => {
       const w = host.clientWidth || 320;
       const h = host.clientHeight || 320;
-      fitCamera(camera, w, h);
+      fitPersp(camera, w, h);
       renderer.setSize(w, h);
     };
     const ro = new ResizeObserver(onResize);
@@ -235,17 +328,19 @@ export function BodyScene({
     return () => {
       window.cancelAnimationFrame(frame);
       ro.disconnect();
-      sphere.dispose();
-      cyl.dispose();
-      ringGeo.dispose();
       [
-        headMat,
-        neckMat,
-        heartMat,
-        ringMat,
-        ...lungMats,
-        ...bronMats,
-      ].forEach((m) => m.dispose());
+        rightGeo,
+        leftGeo,
+        heartGeo,
+        tracheaGeo,
+        bronRGeo,
+        bronLGeo,
+        aortaGeo,
+        ringGeo,
+        senseGeo,
+        ...ribGeos,
+      ].forEach((g) => g.dispose());
+      [rightMat, leftMat, heartMat, airwayMat, vesselMat, senseMat, ribMat, ringMat].forEach((m) => m.dispose());
       renderer.dispose();
       renderer.domElement.remove();
     };
