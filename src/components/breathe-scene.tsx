@@ -5,6 +5,12 @@ const PETALS = 7;
 const IN = 4;
 const OUT = 4;
 const CYCLE = IN + OUT;
+/** Half-size of the ortho view. Petals must stay inside this. */
+const VIEW = 2;
+const SCALE_MIN = 0.5;
+const SCALE_MAX = 0.72;
+const RADIUS_MIN = 0.16;
+const RADIUS_MAX = VIEW * 0.82 - SCALE_MAX;
 
 function ease(t: number): number {
   return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
@@ -15,6 +21,22 @@ function openAmount(running: boolean, now: number, startedAt: number): number {
   const elapsed = ((now - startedAt) / 1000) % CYCLE;
   if (elapsed < IN) return ease(elapsed / IN);
   return 1 - ease((elapsed - IN) / OUT);
+}
+
+function fitCamera(camera: THREE.OrthographicCamera, w: number, h: number) {
+  const aspect = w / Math.max(h, 1);
+  if (aspect >= 1) {
+    camera.left = -VIEW * aspect;
+    camera.right = VIEW * aspect;
+    camera.top = VIEW;
+    camera.bottom = -VIEW;
+  } else {
+    camera.left = -VIEW;
+    camera.right = VIEW;
+    camera.top = VIEW / aspect;
+    camera.bottom = -VIEW / aspect;
+  }
+  camera.updateProjectionMatrix();
 }
 
 export function BreatheScene({
@@ -48,8 +70,9 @@ export function BreatheScene({
     host.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(32, width / height, 0.1, 20);
-    camera.position.z = 6.2;
+    const camera = new THREE.OrthographicCamera(-VIEW, VIEW, VIEW, -VIEW, 0.1, 20);
+    camera.position.z = 6;
+    fitCamera(camera, width, height);
 
     const group = new THREE.Group();
     scene.add(group);
@@ -96,14 +119,14 @@ export function BreatheScene({
     let frame = 0;
     const tick = (now: number) => {
       const open = reduce ? 0.4 : openAmount(runningRef.current, now, startedAt.current);
-      const radius = 0.28 + open * 0.92;
-      const scale = 0.72 + open * 0.55;
+      const radius = RADIUS_MIN + open * (RADIUS_MAX - RADIUS_MIN);
+      const scale = SCALE_MIN + open * (SCALE_MAX - SCALE_MIN);
       petals.forEach((mesh, i) => {
         const a = (i / PETALS) * Math.PI * 2 + now * 0.00008;
-        mesh.position.set(Math.cos(a) * radius, Math.sin(a) * radius * 0.92, Math.sin(a * 2) * 0.08);
+        mesh.position.set(Math.cos(a) * radius, Math.sin(a) * radius, 0);
         mesh.scale.setScalar(scale);
       });
-      core.scale.setScalar(0.85 + open * 0.35);
+      core.scale.setScalar(0.72 + open * 0.22);
       group.rotation.z = now * 0.00005;
       renderer.render(scene, camera);
       frame = window.requestAnimationFrame(tick);
@@ -113,8 +136,7 @@ export function BreatheScene({
     const onResize = () => {
       const w = host.clientWidth || 280;
       const h = host.clientHeight || 280;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
+      fitCamera(camera, w, h);
       renderer.setSize(w, h);
     };
     const ro = new ResizeObserver(onResize);
