@@ -98,6 +98,40 @@ export const MILESTONES: Milestone[] = [
   },
 ];
 
+export const RING_GOALS: { afterSeconds: number; label: string }[] = [
+  { afterSeconds: 1 * DAY, label: "1 day" },
+  { afterSeconds: 3 * DAY, label: "3 days" },
+  { afterSeconds: 7 * DAY, label: "7 days" },
+  { afterSeconds: 14 * DAY, label: "14 days" },
+  { afterSeconds: 30 * DAY, label: "30 days" },
+  { afterSeconds: 90 * DAY, label: "90 days" },
+  { afterSeconds: 180 * DAY, label: "6 months" },
+  { afterSeconds: 365 * DAY, label: "1 year" },
+];
+
+export function ringGoal(seconds: number): {
+  label: string;
+  progress: number;
+  remainingSeconds: number;
+  complete: boolean;
+} {
+  const idx = RING_GOALS.findIndex((g) => seconds < g.afterSeconds);
+  if (idx === -1) {
+    const last = RING_GOALS[RING_GOALS.length - 1]!;
+    return { label: last.label, progress: 1, remainingSeconds: 0, complete: true };
+  }
+  const next = RING_GOALS[idx]!;
+  const prevAt = idx === 0 ? 0 : RING_GOALS[idx - 1]!.afterSeconds;
+  const span = Math.max(1, next.afterSeconds - prevAt);
+  const progress = Math.min(1, Math.max(0, (seconds - prevAt) / span));
+  return {
+    label: next.label,
+    progress,
+    remainingSeconds: Math.max(0, next.afterSeconds - seconds),
+    complete: false,
+  };
+}
+
 export function nextMilestone(seconds: number): {
   current: Milestone | null;
   next: Milestone;
