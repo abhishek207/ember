@@ -81,7 +81,7 @@ function Medi() {
         <p className="mt-2 text-sm text-muted-foreground">A voice, a timer, and air.</p>
 
         {sitting ? (
-          <div className="glass mt-8 rounded-3xl px-5 py-6 text-center">
+          <div className="mt-8 rounded-3xl bg-card/85 px-5 py-6 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
             <BreatheScene running className="mx-auto size-56" />
             <p className="mt-2 text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
               {guide ? guide.label : "Sitting"}
@@ -130,7 +130,7 @@ function Medi() {
                       setGuideId(null);
                       medi.startSit(sit.minutes);
                     }}
-                    className="glass h-14 rounded-2xl text-sm font-medium"
+                    className="h-14 rounded-2xl bg-card/85 text-sm font-medium shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
                   >
                     {sit.label}
                   </button>
@@ -182,7 +182,7 @@ function SoundRow({
       type="button"
       onClick={onToggle}
       className={cn(
-        "glass flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-left",
+        "flex w-full items-center gap-4 rounded-2xl bg-card/85 px-4 py-3.5 text-left shadow-[0_0_0_1px_rgba(255,255,255,0.06)]",
         on && "bg-primary/15",
       )}
     >

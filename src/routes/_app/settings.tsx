@@ -324,7 +324,7 @@ function AccountConnections() {
           return (
             <li
               key={p.providerId}
-              className="glass flex items-center justify-between gap-3 rounded-2xl px-4 py-3"
+              className="flex items-center justify-between gap-3 rounded-2xl bg-card px-4 py-3 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
             >
               <div>
                 <p className="text-sm font-medium">{p.label}</p>
@@ -361,7 +361,7 @@ function AccountSection() {
   return (
     <section className="space-y-3">
       <h2 className="font-display text-lg font-medium">Account</h2>
-      <div className="glass rounded-2xl px-4 py-3">
+      <div className="rounded-2xl bg-card px-4 py-3 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <p className="font-medium">{label}</p>
         {email ? <p className="mt-0.5 text-sm text-muted-foreground">{email}</p> : null}
       </div>

@@ -29,7 +29,7 @@ export function LiveClock({ seconds }: { seconds: number }) {
 
 function Unit({ value, label }: { value: number; label: string }) {
   return (
-    <div className="glass rounded-2xl px-1 py-3">
+    <div className="rounded-2xl bg-card px-1 py-3 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
       <div className="font-display text-2xl font-medium tabular-nums tracking-tight sm:text-3xl">
         {value}
       </div>

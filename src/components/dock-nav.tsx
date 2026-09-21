@@ -1,6 +1,7 @@
 import { useEffect, useState, type RefObject } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Flower2, HeartPulse, Home, UserRound, Wind } from "lucide-react";
+import { LiquidSurface } from "@/components/liquid-glass";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -27,7 +28,8 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
         const y = el.scrollTop;
         const dy = y - last;
         last = y;
-        if (dy > 10 && y > 20) setCollapsed(true);
+        if (y <= 28) setCollapsed(false);
+        else if (dy > 8) setCollapsed(true);
       });
     };
     el.addEventListener("scroll", onScroll, { passive: true });
@@ -42,10 +44,8 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
   }, [pathname]);
 
   return (
-    <nav
-      aria-label="Main"
-      aria-expanded={!collapsed}
-      className={cn("dock glass-liquid", collapsed && "is-collapsed")}
+    <LiquidSurface
+      collapsed={collapsed}
       onClick={(e) => {
         if (!collapsed) return;
         e.preventDefault();
@@ -73,6 +73,6 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
           );
         })}
       </ul>
-    </nav>
+    </LiquidSurface>
   );
 }

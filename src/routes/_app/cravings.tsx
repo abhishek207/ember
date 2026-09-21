@@ -77,7 +77,7 @@ function Urge() {
             {cravings.slice(0, 6).map((c) => (
               <li
                 key={c.id}
-                className="glass rounded-2xl px-4 py-3 text-sm"
+                className="rounded-2xl bg-card px-4 py-3 text-sm shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
               >
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="tabular-nums font-medium">{c.intensity}/10</span>
