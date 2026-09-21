@@ -95,9 +95,9 @@ function Settings() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-lg px-5 pt-8 pb-10">
-      <p className="text-sm font-medium tracking-wide text-primary">Settings</p>
-      <h1 className="mt-1 font-display text-3xl font-medium tracking-tight">Your log</h1>
+    <div className="mx-auto w-full max-w-lg px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-10">
+      <p className="text-sm font-medium tracking-wide text-primary">You</p>
+      <h1 className="mt-1 font-display text-3xl font-medium tracking-tight">Settings</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Changes apply on Home as soon as you save. They are stored with your account.
       </p>

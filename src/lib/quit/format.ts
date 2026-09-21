@@ -86,3 +86,32 @@ export function formatCigsPerDay(n: number): string {
   const rounded = Math.round(n * 10) / 10;
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
 }
+
+export function formatCount(n: number): string {
+  const v = Math.max(0, Math.round(n));
+  return new Intl.NumberFormat("en-IN").format(v);
+}
+
+export function formatLifeMinutes(mins: number): string {
+  const m = Math.max(0, Math.round(mins));
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 48) return `${h}h`;
+  const d = Math.floor(h / 24);
+  const rem = h % 24;
+  return rem ? `${d}d ${rem}h` : `${d}d`;
+}
+
+export function firstName(name: string | null | undefined): string {
+  const t = (name ?? "").trim();
+  if (!t) return "";
+  return t.split(/\s+/)[0] ?? t;
+}
+
+export function dayGreeting(now = new Date()): string {
+  const h = now.getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+

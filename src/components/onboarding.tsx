@@ -39,9 +39,9 @@ export function Onboarding() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-10">
+    <div className="scene-login mx-auto flex min-h-dvh w-full max-w-md flex-col justify-end px-5 pt-12 pb-10">
       <p className="text-sm font-medium tracking-wide text-primary">Ember</p>
-      <h1 className="mt-2 font-display text-3xl font-medium tracking-tight">When did you stop?</h1>
+      <h1 className="mt-2 font-display text-3xl font-medium tracking-tight">When was your last cigarette?</h1>
       <p className="mt-2 text-pretty text-sm text-muted-foreground">
         Just a few facts. You can change them later. Nothing here is a lecture.
       </p>

@@ -9,7 +9,21 @@ export const URGE_LINES = [
   "One urge does not rewrite the days behind you.",
 ];
 
+export const HOME_LINES = [
+  "Discipline today is freedom tomorrow.",
+  "A clearer day is already under way.",
+  "You kept the air. That is the work.",
+  "Quiet progress still counts.",
+  "One clean hour stacked on another.",
+  "The body notices every day you stay.",
+];
+
 export function urgeLineFor(now = Date.now()): string {
   const i = Math.floor(now / 60000) % URGE_LINES.length;
   return URGE_LINES[i] ?? URGE_LINES[0]!;
+}
+
+export function homeLineFor(now = Date.now()): string {
+  const day = Math.floor(now / 86400000);
+  return HOME_LINES[day % HOME_LINES.length] ?? HOME_LINES[0]!;
 }

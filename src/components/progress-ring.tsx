@@ -13,13 +13,19 @@ export function ProgressRing({
   const offset = c * (1 - clamped);
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      className="-rotate-90"
+      aria-hidden
+    >
       <circle
         cx={size / 2}
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="var(--color-secondary)"
+        stroke="color-mix(in oklab, var(--color-primary) 22%, transparent)"
         strokeWidth={stroke}
       />
       <circle

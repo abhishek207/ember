@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppCravingsRouteImport } from './routes/_app/cravings'
 import { Route as AppHealthRouteImport } from './routes/_app/health'
+import { Route as AppMediRouteImport } from './routes/_app/medi'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -41,6 +42,11 @@ const AppHealthRoute = AppHealthRouteImport.update({
   path: '/health',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMediRoute = AppMediRouteImport.update({
+  id: '/medi',
+  path: '/medi',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/cravings': typeof AppCravingsRoute
   '/health': typeof AppHealthRoute
+  '/medi': typeof AppMediRoute
   '/settings': typeof AppSettingsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -64,6 +71,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/cravings': typeof AppCravingsRoute
   '/health': typeof AppHealthRoute
+  '/medi': typeof AppMediRoute
   '/settings': typeof AppSettingsRoute
   '/': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -74,6 +82,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/cravings': typeof AppCravingsRoute
   '/_app/health': typeof AppHealthRoute
+  '/_app/medi': typeof AppMediRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -81,15 +90,29 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/login' | '/cravings' | '/health' | '/settings' | '/api/auth/$'
+    | '/'
+    | '/login'
+    | '/cravings'
+    | '/health'
+    | '/medi'
+    | '/settings'
+    | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/cravings' | '/health' | '/settings' | '/' | '/api/auth/$'
+  to:
+    | '/login'
+    | '/cravings'
+    | '/health'
+    | '/medi'
+    | '/settings'
+    | '/'
+    | '/api/auth/$'
   id:
     | '__root__'
     | '/_app'
     | '/login'
     | '/_app/cravings'
     | '/_app/health'
+    | '/_app/medi'
     | '/_app/settings'
     | '/_app/'
     | '/api/auth/$'
@@ -138,6 +161,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppHealthRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/medi': {
+      id: '/_app/medi'
+      path: '/medi'
+      fullPath: '/medi'
+      preLoaderRoute: typeof AppMediRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings': {
       id: '/_app/settings'
       path: '/settings'
@@ -158,6 +188,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppCravingsRoute: typeof AppCravingsRoute
   AppHealthRoute: typeof AppHealthRoute
+  AppMediRoute: typeof AppMediRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -165,6 +196,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCravingsRoute: AppCravingsRoute,
   AppHealthRoute: AppHealthRoute,
+  AppMediRoute: AppMediRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
 }

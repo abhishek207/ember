@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 type Phase = { label: string; seconds: number; scale: number };
 
 const CYCLE: Phase[] = [
-  { label: "Inhale", seconds: 4, scale: 1.18 },
-  { label: "Hold", seconds: 7, scale: 1.18 },
-  { label: "Exhale", seconds: 8, scale: 1 },
+  { label: "Breathe in", seconds: 4, scale: 1.12 },
+  { label: "Hold", seconds: 7, scale: 1.12 },
+  { label: "Breathe out", seconds: 8, scale: 0.92 },
 ];
 
 export function Breathing() {
@@ -41,28 +41,28 @@ export function Breathing() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-5 py-2">
-      <div className="grid size-44 place-items-center">
+    <div className="flex flex-col items-center gap-6 py-4">
+      <div className="grid size-56 place-items-center">
         <div
-          className="size-28 rounded-full bg-primary/20 shadow-[0_0_0_1px_rgba(143,154,134,0.35)_inset]"
+          className="size-40 rounded-full border-[10px] border-primary/80 bg-primary/10"
           style={{
             transform: `scale(${running ? phase.scale : 1})`,
             transitionProperty: "transform",
-            transitionDuration: `${phase.seconds}s`,
+            transitionDuration: running ? `${phase.seconds}s` : "0.4s",
             transitionTimingFunction: "ease-in-out",
           }}
         />
       </div>
       <div className="text-center">
-        <p className="font-display text-xl font-medium">
+        <p className="font-display text-2xl font-medium">
           {running ? phase.label : "4–7–8"}
         </p>
         <p className="mt-1 tabular-nums text-sm text-muted-foreground">
-          {running ? `${remaining}s` : "Inhale 4, hold 7, out 8"}
+          {running ? remaining : "In 4, hold 7, out 8"}
         </p>
       </div>
       <Button type="button" variant={running ? "secondary" : "default"} onClick={toggle}>
-        {running ? "Stop" : "Breathe with me"}
+        {running ? "Stop" : "Breathe"}
       </Button>
     </div>
   );
