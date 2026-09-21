@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Pause, Play } from "lucide-react";
+import { BreatheScene } from "@/components/breathe-scene";
 import { Button } from "@/components/ui/button";
 import { SITS, SOUNDS, type SoundId } from "@/lib/medi/engine";
 import { GUIDES, lineAt, type Guide, type GuideId } from "@/lib/medi/guides";
@@ -80,15 +81,16 @@ function Medi() {
         <p className="mt-2 text-sm text-muted-foreground">A voice, a timer, and air.</p>
 
         {sitting ? (
-          <div className="mt-8 rounded-3xl bg-card/80 px-5 py-8 text-center shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-foreground)_8%,transparent)] backdrop-blur-sm">
-            <p className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
+          <div className="mt-8 rounded-3xl bg-card/80 px-5 py-6 text-center shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-foreground)_8%,transparent)] backdrop-blur-sm">
+            <BreatheScene running className="mx-auto size-56" />
+            <p className="mt-2 text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
               {guide ? guide.label : "Sitting"}
             </p>
-            <p className="mt-3 font-display text-5xl font-medium tabular-nums tracking-tight">
+            <p className="mt-2 font-display text-5xl font-medium tabular-nums tracking-tight">
               {formatSit(remaining)}
             </p>
             {spoken ? (
-              <p className="mx-auto mt-5 max-w-[20rem] text-sm leading-relaxed text-foreground/90">
+              <p className="mx-auto mt-4 max-w-[20rem] text-sm leading-relaxed text-foreground/90">
                 {spoken}
               </p>
             ) : null}
