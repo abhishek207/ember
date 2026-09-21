@@ -84,31 +84,22 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
   useEffect(() => {
     const el = scrollRoot.current;
     if (!el) return;
-    let last = el.scrollTop;
-    let frame = 0;
-    const onScroll = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        const y = el.scrollTop;
-        const dy = y - last;
-        last = y;
-        if (y <= 28) setCollapsed(false);
-        else if (dy > 8) setCollapsed(true);
-      });
+    const apply = () => {
+      const y = el.scrollTop;
+      if (y <= 24) setCollapsed(false);
+      else if (y >= 56) setCollapsed(true);
     };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      if (frame) cancelAnimationFrame(frame);
-    };
+    apply();
+    el.addEventListener("scroll", apply, { passive: true });
+    return () => el.removeEventListener("scroll", apply);
   }, [scrollRoot]);
 
   useEffect(() => {
-    setCollapsed(false);
     setHover(null);
     setDragX(null);
-  }, [pathname]);
+    const y = scrollRoot.current?.scrollTop ?? 0;
+    setCollapsed(y >= 56);
+  }, [pathname, scrollRoot]);
 
   function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
     if (collapsed || e.button !== 0) return;
@@ -170,7 +161,9 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
           className={cn("dock-thumb", dragX != null && "is-dragging")}
           style={{ width: thumb.w, transform: `translateX(${x}px)` }}
           aria-hidden
-        />
+        >
+          <span className="dock-thumb-spec" />
+        </span>
         <ul className="dock-list">
           {NAV.map((item, i) => {
             const on = i === active;
