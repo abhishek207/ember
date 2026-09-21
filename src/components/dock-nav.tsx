@@ -30,7 +30,7 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
   const [hover, setHover] = useState<number | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
-  const drag = useRef<{ id: number; moved: boolean } | null>(null);
+  const drag = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null);
   const active = hover ?? navIndex(pathname);
 
   function measure(index: number) {
@@ -57,6 +57,13 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
     return best;
   }
 
+  function go(index: number) {
+    const item = NAV[index];
+    if (!item) return;
+    measure(index);
+    if (navIndex(pathname) !== index) navigate({ to: item.to });
+  }
+
   function follow(clientX: number) {
     const track = trackRef.current;
     if (!track) return;
@@ -68,7 +75,7 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
   }
 
   useLayoutEffect(() => {
-    if (collapsed || drag.current) return;
+    if (collapsed || drag.current?.moved) return;
     measure(navIndex(pathname));
     const t = window.setTimeout(() => measure(navIndex(pathname)), 340);
     return () => window.clearTimeout(t);
@@ -105,15 +112,20 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
 
   function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
     if (collapsed || e.button !== 0) return;
-    drag.current = { id: e.pointerId, moved: false };
-    e.currentTarget.setPointerCapture(e.pointerId);
+    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
   }
 
   function onPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
     const d = drag.current;
     if (!d || d.id !== e.pointerId) return;
-    if (!d.moved && Math.abs(e.movementX) < 2 && Math.abs(e.movementY) < 2) return;
-    d.moved = true;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    if (!d.moved) {
+      if (Math.hypot(dx, dy) < 16) return;
+      if (Math.abs(dx) < Math.abs(dy)) return;
+      d.moved = true;
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
     follow(e.clientX);
   }
 
@@ -122,17 +134,11 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
     if (!d || d.id !== e.pointerId) return;
     const moved = d.moved;
     drag.current = null;
-    if (!moved) {
-      setDragX(null);
-      setHover(null);
-      return;
-    }
-    const next = indexFromClientX(e.clientX);
-    const item = NAV[next]!;
-    setHover(null);
     setDragX(null);
-    measure(next);
-    if (navIndex(pathname) !== next) navigate({ to: item.to });
+    setHover(null);
+    if (collapsed) return;
+    go(indexFromClientX(e.clientX));
+    if (moved) e.preventDefault();
   }
 
   const x = dragX ?? thumb.x;
@@ -154,7 +160,11 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
+        onPointerCancel={() => {
+          drag.current = null;
+          setDragX(null);
+          setHover(null);
+        }}
       >
         <span
           className={cn("dock-thumb", dragX != null && "is-dragging")}
@@ -178,7 +188,7 @@ export function DockNav({ scrollRoot }: { scrollRoot: RefObject<HTMLDivElement |
                   className="dock-link"
                   tabIndex={collapsed && !on ? -1 : undefined}
                   onClick={(e) => {
-                    if (collapsed || drag.current?.moved) e.preventDefault();
+                    if (collapsed) e.preventDefault();
                   }}
                 >
                   <Icon className="size-5" strokeWidth={on ? 2.3 : 1.7} />
