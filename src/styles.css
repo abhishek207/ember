@@ -167,7 +167,46 @@
   border-radius: 0.85rem;
 }
 
+.dock-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+}
+
+.dock-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  height: 100%;
+  border-radius: 1.75rem;
+  background-color: rgb(255 255 255 / 0.14);
+  -webkit-backdrop-filter: blur(18px) saturate(190%) brightness(1.22);
+  backdrop-filter: blur(18px) saturate(190%) brightness(1.22);
+  box-shadow:
+    inset 0 0.6px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -0.5px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 0.5px rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+  transition:
+    transform 280ms var(--ease-smooth),
+    width 280ms var(--ease-smooth),
+    opacity 180ms var(--ease-smooth);
+}
+
+.dock-thumb.is-dragging {
+  transition: none;
+}
+
+.liquid-dock.is-collapsed .dock-thumb {
+  opacity: 0;
+}
+
 .dock-list {
+  position: relative;
+  z-index: 1;
   display: flex;
   width: 100%;
   height: 100%;
