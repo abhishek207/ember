@@ -192,6 +192,31 @@
   animation: breathe-ring 8s cubic-bezier(0.37, 0, 0.18, 1) infinite;
 }
 
+.breathe-petal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5.5rem;
+  height: 5.5rem;
+  margin: -2.75rem 0 0 -2.75rem;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--color-primary) 34%, transparent);
+  transform-origin: 50% 50%;
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.37, 0, 0.18, 1);
+}
+
+.breathe-core {
+  position: relative;
+  z-index: 1;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--color-primary) 55%, var(--color-foreground) 10%);
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.37, 0, 0.18, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lung-breathe,
   .ember-core,
